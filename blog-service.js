@@ -1,30 +1,25 @@
-// var postJSON = require("./data/posts.json");
-// var categoriesJSON = require("./data/categories.json");
+var postArr = [];
+var cateArr = [];
 
-// var post = JSON.parse(JSON.stringify(postJSON));
-// var categories = JSON.parse(JSON.stringify(categoriesJSON));
+const { init } = require("express/lib/application");
 
-// post = Object.entries(post);
-// categories = Object.entries(categories);
-
-// console.log(categories);
-
-function initialize() {
+module.exports.initialize = function() {
     const fs = require("fs");
-    fs.readFile("./data/posts.json", 'utf8', (err, data) => {
-        var postArr = Object.entries(JSON.parse(data));
+    postArr = Object.values(JSON.parse(fs.readFileSync("./data/posts.json").toString()));
+    fs.readFileSync("./data/posts.json", "utf8", (err, data) => {
         if (err) {
+            console.log("Fail");
             return new Promise(function(resolve, reject) {
                 setTimeout(function() {
                     reject("unable to read posts.json file");
                 })
             })
         }
+
     })
 
+    cateArr = Object.values(JSON.parse(fs.readFileSync("./data/categories.json").toString()));
     fs.readFile("./data/categories.json", 'utf8', (err, data) => {
-        var cateArr = Object.entries(JSON.parse(data));
-        // console.log(cateArr);
         if (err) {
             return new Promise(function(resolve, reject) {
                 setTimeout(function() {
@@ -41,7 +36,57 @@ function initialize() {
     })
 }
 
-initialize();
-initialize().then(function(data) {
-    console.log(data);
-})
+module.exports.getAllPosts = function() {
+    if (postArr.length == 0) {
+
+        return new Promise(function(resolve, reject) {
+            setTimeout(function() {
+                reject("no post result returned");
+            })
+        })
+    } else {
+        return new Promise(function(resolve, reject) {
+            setTimeout(function() {
+                resolve(postArr);
+            })
+        })
+    }
+
+
+}
+
+module.exports.getPublishedPosts = function() {
+    var publishedPosts = postArr.filter(postArr => postArr.published == true);
+    if (publishedPosts.length == 0) {
+        return new Promise(function(resolve, reject) {
+            setTimeout(function() {
+                reject("no result returned");
+            })
+        })
+    } else {
+        return new Promise(function(resolve, reject) {
+            setTimeout(function() {
+                resolve(publishedPosts);
+            })
+        })
+    }
+}
+
+module.exports.getCategories = function() {
+
+    if (cateArr.length == 0) {
+
+        return new Promise(function(resolve, reject) {
+            setTimeout(function() {
+                reject("no categories result returned");
+            })
+        })
+    } else {
+        return new Promise(function(resolve, reject) {
+            setTimeout(function() {
+                resolve(cateArr);
+            })
+        })
+    }
+
+}
