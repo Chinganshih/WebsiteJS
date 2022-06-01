@@ -8,7 +8,6 @@ module.exports.initialize = function() {
     postArr = Object.values(JSON.parse(fs.readFileSync("./data/posts.json").toString()));
     fs.readFileSync("./data/posts.json", "utf8", (err, data) => {
         if (err) {
-            console.log("Fail");
             return new Promise(function(resolve, reject) {
                 setTimeout(function() {
                     reject("unable to read posts.json file");
