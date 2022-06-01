@@ -1,16 +1,16 @@
 /*********************************************************************************
- *  WEB322 – Assignment 2
- *  I declare that this assignment is my own work in accordance with Seneca Academic Policy.  
- *  No part of this assignment has been copied manually or electronically from any other source
- *  (including web sites) or distributed to other students.
+ *  WEB322 – Assignment 02
+ *  I declare that this assignment is my own work in accordance with Seneca  Academic Policy.  No part *  of this assignment has been copied manually or electronically from any other source 
+ *  (including 3rd party web sites) or distributed to other students.
  * 
- *  Name: __chinganshih________ Student ID: __148221195__ Date: ___2022-05-31___
+ *  Name: _ChingAn, Shih_ Student ID: _148221195_ Date: __2022-06-01__
  *
- *  Heroku Web App URL: ___https://boiling-falls-99685.herokuapp.com_____
+ *  Online (Heroku) URL:  https://damp-depths-30191.herokuapp.com
  *
- *  GitHub Repository URL: __https://github.com/Chinganshih/web322-app.git____
+ *  GitHub Repository URL: __ https://github.com/Chinganshih/web322-app.git____
  *
  ********************************************************************************/
+
 
 var blog_service = require("./blog-service.js");
 var path = require("path");
