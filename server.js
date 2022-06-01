@@ -12,7 +12,7 @@
  *
  ********************************************************************************/
 
-var blog_service = require("./blog-service");
+var blog_service = require("./blog-service.js");
 var path = require("path");
 var express = require("express");
 var app = express();
@@ -37,16 +37,35 @@ app.get("/about", function(req, res) {
 })
 
 app.get("/blog", function(req, res) {
-    res.send();
-    console.log("TODO: get all posts who have published==true");
+    blog_service.getPublishedPosts().then((data) => {
+        res.send(data);
+    })
+    blog_service.getPublishedPosts().catch((err) => {
+        var message = err;
+        res.send(message);
+    })
+
 })
 
 app.get("/posts", function(req, res) {
-    res.sendFile(path.join(__dirname, "data/posts.json"));
+    blog_service.getAllPosts().then((data) => {
+        res.send(data);
+    })
+    blog_service.getAllPosts().catch((err) => {
+        var message = err;
+        res.send(message);
+    })
+
 })
 
 app.get("/categories", function(req, res) {
-    res.sendFile(path.join(__dirname, "data/categories.json"));
+    blog_service.getCategories().then((data) => {
+        res.send(data);
+    })
+    blog_service.getCategories().catch((err) => {
+        var message = err;
+        res.send(message);
+    })
 })
 
 app.get("*", function(req, res) {
@@ -54,4 +73,10 @@ app.get("*", function(req, res) {
 })
 
 // setup http server to listen on HTTP_PORT
-app.listen(HTTP_PORT, onHTTPStart);
+blog_service.initialize().then(function() {
+    app.listen(HTTP_PORT, onHTTPStart);
+})
+
+blog_service.initialize().catch(() => {
+    console.log("Fail to read JSON file")
+})
