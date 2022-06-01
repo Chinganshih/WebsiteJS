@@ -17,16 +17,20 @@ var path = require("path");
 var express = require("express");
 var app = express();
 
+// for your server to correctly return the "/css/main.css" file, the "static" middleware must be used:  
+// in your server.js file, add the line: app.use(express.static('public')); before your "routes"
+app.use(express.static('public'));
 
+// The server must listen on process.env.PORT || 8080
 var HTTP_PORT = process.env.PORT || 8080;
 
+//The server must output: "Express http server listening on port" - to the console, where port is the port the server is currently listening on (ie: 8080)
 function onHTTPStart() {
     console.log("Express http server listening on:" + HTTP_PORT);
 }
 
-// app.use(express.static('public'));
-
 // setup a 'route' to listen on the default url path
+// The route "/" must redirect the user to the "/about" route – this can be accomplished using res.redirect()
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "/views/about.html"));
     res.redirect("/about");
@@ -36,6 +40,7 @@ app.get("/about", function(req, res) {
     res.sendFile(path.join(__dirname, "views/about.html"));
 })
 
+// This route will return a JSON formatted string containing all of the posts within the posts.json file whose published property is set to true (ie: "published" posts)
 app.get("/blog", function(req, res) {
     blog_service.getPublishedPosts().then((data) => {
         res.send(data);
@@ -47,6 +52,7 @@ app.get("/blog", function(req, res) {
 
 })
 
+// This route will return a JSON formatted string containing all the posts within the posts.json files
 app.get("/posts", function(req, res) {
     blog_service.getAllPosts().then((data) => {
         res.send(data);
@@ -58,6 +64,7 @@ app.get("/posts", function(req, res) {
 
 })
 
+// This route will return a JSON formatted string containing all of the categories within the categories.json file
 app.get("/categories", function(req, res) {
     blog_service.getCategories().then((data) => {
         res.send(data);
@@ -68,6 +75,7 @@ app.get("/categories", function(req, res) {
     })
 })
 
+// If the user enters a route that is not matched with anything in your app (ie: http://localhost:8080/app) then you must return the custom message "Page Not Found" with an HTTP status code of 404.
 app.get("*", function(req, res) {
     res.sendFile(path.join(__dirname, "views/notFound.html"), 404);
 })
