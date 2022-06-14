@@ -80,6 +80,9 @@ module.exports.addPost = (postData) => {
     if (postData) {
         postData.id = (postArr.length) + 1;
         (postData.published) ? postData.published = true: postData.published = false;
+        postData.category = parseInt(postData.category);
+        postData.postDate = new Date().toISOString().slice(0, 10);
+        console.log(postData);
         postArr.push(Object.assign({}, postData));
         isAdd = 1;
     }
