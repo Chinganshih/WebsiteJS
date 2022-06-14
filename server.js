@@ -58,26 +58,46 @@ app.get("/about", (req, res) => {
 
 // This route will return a JSON formatted string containing all of the posts within the posts.json file whose published property is set to true (ie: "published" posts)
 app.get("/blog", (req, res) => {
-    blog_service.getPublishedPosts().then((data) => {
-        res.send(data);
-    })
-    blog_service.getPublishedPosts().catch((err) => {
-        var message = err;
-        res.send(message);
-    })
+    blog_service.getPublishedPosts()
+        .then((data) => { res.send(data); })
+        .catch((err) => {
+            var message = err;
+            res.send(message);
+        })
 
 })
 
 // This route will return a JSON formatted string containing all the posts within the posts.json files
 app.get("/posts", (req, res) => {
-    blog_service.getAllPosts().then((data) => {
-        res.send(data);
-    })
-    blog_service.getAllPosts().catch((err) => {
-        var message = err;
-        res.send(message);
-    })
 
+    var category = req.query.category;
+    var minDate = req.query.minDate;
+
+    if (category) {
+        blog_service.getPostsByCategory(category)
+            .then((data) => { res.send(data); })
+            .catch((err) => { res.send(err); })
+
+    } else if (minDate) {
+        blog_service.getPostsByMinDate(minDate)
+            .then((data) => { res.send(data); })
+            .catch((err) => { res.send(err); })
+    } else {
+        blog_service.getAllPosts()
+            .then((data) => { res.send(data); })
+            .catch((err) => {
+                var message = err;
+                res.send(message);
+            })
+    }
+
+})
+
+app.get("/post/:value", (req, res) => {
+    var id = req.params.value;
+    blog_service.getPostById(id)
+        .then((data) => res.send(data))
+        .catch((err) => res.send(err))
 })
 
 app.get("/posts/add", (req, res) => {
@@ -126,13 +146,12 @@ app.post("/posts/add", upload.single("featureImage"), (req, res) => {
 
 // This route will return a JSON formatted string containing all of the categories within the categories.json file
 app.get("/categories", (req, res) => {
-    blog_service.getCategories().then((data) => {
-        res.send(data);
-    })
-    blog_service.getCategories().catch((err) => {
-        var message = err;
-        res.send(message);
-    })
+    blog_service.getCategories()
+        .then((data) => { res.send(data); })
+        .catch((err) => {
+            var message = err;
+            res.send(message);
+        })
 })
 
 // If the user enters a route that is not matched with anything in your app (ie: http://localhost:8080/app) then you must return the custom message "Page Not Found" with an HTTP status code of 404.
