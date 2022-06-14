@@ -3,7 +3,7 @@ var cateArr = [];
 
 const { init } = require("express/lib/application");
 
-module.exports.initialize = function() {
+module.exports.initialize = () => {
     const fs = require("fs");
     postArr = Object.values(JSON.parse(fs.readFileSync("./data/posts.json").toString()));
     fs.readFileSync("./data/posts.json", "utf8", (err, data) => {
@@ -35,57 +35,73 @@ module.exports.initialize = function() {
     })
 }
 
-module.exports.getAllPosts = function() {
-    if (postArr.length == 0) {
+module.exports.getAllPosts = () => {
 
-        return new Promise(function(resolve, reject) {
-            setTimeout(function() {
-                reject("no post result returned");
-            })
-        })
-    } else {
-        return new Promise(function(resolve, reject) {
-            setTimeout(function() {
-                resolve(postArr);
-            })
-        })
-    }
-
+    return new Promise((resolve, reject) => {
+        if (postArr.length == 0) {
+            reject("no post result returned");
+        } else {
+            resolve(postArr);
+        }
+    });
 
 }
 
-module.exports.getPublishedPosts = function() {
+module.exports.getPublishedPosts = () => {
     var publishedPosts = postArr.filter(postArr => postArr.published == true);
-    if (publishedPosts.length == 0) {
-        return new Promise(function(resolve, reject) {
-            setTimeout(function() {
-                reject("no result returned");
-            })
-        })
-    } else {
-        return new Promise(function(resolve, reject) {
-            setTimeout(function() {
-                resolve(publishedPosts);
-            })
-        })
-    }
+
+    return new Promise((resolve, reject) => {
+        if (publishedPosts.length == 0) {
+            reject("no result returned");
+        } else {
+            resolve(publishedPosts);
+        }
+    });
+    // if (publishedPosts.length == 0) {
+    //     return new Promise(function(resolve, reject) {
+    //         setTimeout(function() {
+    //             reject("no result returned");
+    //         })
+    //     })
+    // } else {
+    //     return new Promise(function(resolve, reject) {
+    //         setTimeout(function() {
+    //             resolve(publishedPosts);
+    //         })
+    //     })
 }
 
-module.exports.getCategories = function() {
 
-    if (cateArr.length == 0) {
+module.exports.getCategories = () => {
 
-        return new Promise(function(resolve, reject) {
-            setTimeout(function() {
-                reject("no categories result returned");
-            })
-        })
-    } else {
-        return new Promise(function(resolve, reject) {
-            setTimeout(function() {
-                resolve(cateArr);
-            })
-        })
+    return new Promise((resolve, reject) => {
+        if (cateArr.length == 0) {
+            reject("no categories result returned");
+        } else {
+            resolve(cateArr);
+        }
+
+    });
+}
+
+module.exports.addPost = (postData) => {
+
+    var isAdd = 0;
+    // Explicitly set the id property of postData to be the length of the "posts" array plus one (1).  This will have the effect of setting the first new post's id to: 31, and so on.
+    if (postData) {
+        postData.id = (postArr.length) + 1;
+        (postData.published) ? postData.published = true: postData.published = false;
+        postArr.push(Object.assign({}, postData));
+        isAdd = 1;
     }
+
+    return new Promise((resolve, reject) => {
+        if (isAdd) {
+            resolve(postArr)
+        } else {
+            reject("No new post added")
+        }
+
+    })
 
 }
