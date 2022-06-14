@@ -1,5 +1,5 @@
 /*********************************************************************************
- *  WEB322 – Assignment 02
+ *  WEB322 – Assignment 03
  *  I declare that this assignment is my own work in accordance with Seneca  Academic Policy.  No part *  of this assignment has been copied manually or electronically from any other source 
  *  (including 3rd party web sites) or distributed to other students.
  * 
@@ -16,6 +16,22 @@ var blog_service = require("./blog-service.js");
 var path = require("path");
 var express = require("express");
 var app = express();
+
+// Inside your server.js file "require" the libraries
+const multer = require("multer");
+const cloudinary = require('cloudinary').v2;
+const streamifier = require('streamifier');
+
+
+// Set the cloudinary config to use your "Cloud Name", "API Key" and "API Secret" values
+cloudinary.config({
+    cloud_name: 'dohfzkmw3',
+    api_key: '864173192532786',
+    api_secret: 'wDMcDkoke_UkqTjnETSeYul8-kM',
+    secure: true
+});
+const upload = multer(); // no { storage: storage } since we are not using disk storage
+
 
 // for your server to correctly return the "/css/main.css" file, the "static" middleware must be used:  
 // in your server.js file, add the line: app.use(express.static('public')); before your "routes"
@@ -36,12 +52,12 @@ app.get("/", (req, res) => {
     res.redirect("/about");
 });
 
-app.get("/about", function(req, res) {
+app.get("/about", (req, res) => {
     res.sendFile(path.join(__dirname, "views/about.html"));
 })
 
 // This route will return a JSON formatted string containing all of the posts within the posts.json file whose published property is set to true (ie: "published" posts)
-app.get("/blog", function(req, res) {
+app.get("/blog", (req, res) => {
     blog_service.getPublishedPosts().then((data) => {
         res.send(data);
     })
@@ -53,7 +69,7 @@ app.get("/blog", function(req, res) {
 })
 
 // This route will return a JSON formatted string containing all the posts within the posts.json files
-app.get("/posts", function(req, res) {
+app.get("/posts", (req, res) => {
     blog_service.getAllPosts().then((data) => {
         res.send(data);
     })
@@ -64,8 +80,52 @@ app.get("/posts", function(req, res) {
 
 })
 
+app.get("/posts/add", (req, res) => {
+    res.sendFile(path.join(__dirname, "/views/addPost.html"));
+})
+
+app.post("/posts/add", upload.single("featureImage"), (req, res) => {
+
+    if (req.file) {
+        let streamUpload = (req) => {
+            return new Promise((resolve, reject) => {
+                let stream = cloudinary.uploader.upload_stream(
+                    (error, result) => {
+                        if (result) {
+                            resolve(result);
+                        } else {
+                            reject(error);
+                        }
+                    });
+                streamifier.createReadStream(req.file.buffer).pipe(stream);
+            });
+        };
+
+        async function upload(req) {
+            let result = await streamUpload(req);
+            console.log(result);
+            return result;
+        }
+
+        upload(req).then((uploaded) => {
+            processPost(uploaded.url);
+        });
+    } else {
+        processPost("");
+    }
+
+    function processPost(imgUrl) {
+        req.body.featureImage = imgUrl;
+        // TODO: Process the req.body and add it as a new Blog Post before redirecting to /posts
+        blog_service.addPost(req.body).then((data) => {
+            res.redirect('/posts');
+        })
+    }
+})
+
+
 // This route will return a JSON formatted string containing all of the categories within the categories.json file
-app.get("/categories", function(req, res) {
+app.get("/categories", (req, res) => {
     blog_service.getCategories().then((data) => {
         res.send(data);
     })
