@@ -57,18 +57,7 @@ module.exports.getPublishedPosts = () => {
             resolve(publishedPosts);
         }
     });
-    // if (publishedPosts.length == 0) {
-    //     return new Promise(function(resolve, reject) {
-    //         setTimeout(function() {
-    //             reject("no result returned");
-    //         })
-    //     })
-    // } else {
-    //     return new Promise(function(resolve, reject) {
-    //         setTimeout(function() {
-    //             resolve(publishedPosts);
-    //         })
-    //     })
+
 }
 
 
@@ -104,4 +93,42 @@ module.exports.addPost = (postData) => {
 
     })
 
+}
+
+
+module.exports.getPostsByCategory = (category) => {
+
+    var postsByCategory = postArr.filter(postArr => postArr.category == category);
+    return new Promise((resolve, reject) => {
+        if (postsByCategory.length == 0) {
+            reject("no result returned");
+        } else {
+            resolve(postsByCategory);
+        }
+    });
+}
+
+module.exports.getPostsByMinDate = (minDateStr) => {
+
+    var postsByMinDate = postArr.filter(postArr => (new Date(postArr.postDate) >= new Date(minDateStr)));
+    return new Promise((resolve, reject) => {
+        if (postsByMinDate.length == 0) {
+            reject("no result returned");
+        } else {
+            resolve(postsByMinDate);
+        }
+    });
+}
+
+module.exports.getPostById = (id) => {
+
+    var postsById = postArr.filter(postArr => postArr.id == id);
+
+    return new Promise((resolve, reject) => {
+        if (postsById.length == 0) {
+            reject("no result returned");
+        } else {
+            resolve(postsById);
+        }
+    });
 }
