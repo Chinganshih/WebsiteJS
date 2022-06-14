@@ -3,9 +3,9 @@
  *  I declare that this assignment is my own work in accordance with Seneca  Academic Policy.  No part *  of this assignment has been copied manually or electronically from any other source 
  *  (including 3rd party web sites) or distributed to other students.
  * 
- *  Name: _ChingAn, Shih_ Student ID: _148221195_ Date: __2022-06-01__
+ *  Name: _ChingAn, Shih_ Student ID: _148221195_ Date: __2022-06-14__
  *
- *  Online (Heroku) URL:  https://damp-depths-30191.herokuapp.com
+ *  Online (Heroku) URL:  https://damp-depths-30191.herokuapp.com/
  *
  *  GitHub Repository URL: __ https://github.com/Chinganshih/web322-app.git____
  *
