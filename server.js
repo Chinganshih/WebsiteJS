@@ -99,15 +99,6 @@ app.get("/about", (req, res) => {
 })
 
 // This route will return a JSON formatted string containing all of the posts within the posts.json file whose published property is set to true (ie: "published" posts)
-// app.get("/blog", (req, res) => {
-//     blog_service.getPublishedPosts()
-//         .then((data) => { res.send(data); })
-//         .catch((err) => {
-//             var message = err;
-//             res.send(message);
-//         })
-
-// })
 app.get('/blog', async(req, res) => {
 
     // Declare an object to store properties for the view
@@ -156,6 +147,57 @@ app.get('/blog', async(req, res) => {
 
 });
 
+// Adding the Blog/:id Route
+app.get('/blog/:id', async(req, res) => {
+
+    // Declare an object to store properties for the view
+    let viewData = {};
+
+    try {
+
+        // declare empty array to hold "post" objects
+        let posts = [];
+
+        // if there's a "category" query, filter the returned posts by category
+        if (req.query.category) {
+            // Obtain the published "posts" by category
+            posts = await blogData.getPublishedPostsByCategory(req.query.category);
+        } else {
+            // Obtain the published "posts"
+            posts = await blogData.getPublishedPosts();
+        }
+
+        // sort the published posts by postDate
+        posts.sort((a, b) => new Date(b.postDate) - new Date(a.postDate));
+
+        // store the "posts" and "post" data in the viewData object (to be passed to the view)
+        viewData.posts = posts;
+
+    } catch (err) {
+        viewData.message = "no results";
+    }
+
+    try {
+        // Obtain the post by "id"
+        viewData.post = await blogData.getPostById(req.params.id);
+    } catch (err) {
+        viewData.message = "no results";
+    }
+
+    try {
+        // Obtain the full list of "categories"
+        let categories = await blogData.getCategories();
+
+        // store the "categories" data in the viewData object (to be passed to the view)
+        viewData.categories = categories;
+    } catch (err) {
+        viewData.categoriesMessage = "no results"
+    }
+
+
+    // render the "blog" view with all of the data (viewData)
+    res.render("blog", { data: viewData })
+});
 
 // This route will return a JSON formatted string containing all the posts within the posts.json files
 app.get("/posts", (req, res) => {

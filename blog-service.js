@@ -131,7 +131,7 @@ module.exports.getPostById = (id) => {
         if (postsById.length == 0) {
             reject("no result returned");
         } else {
-            resolve(postsById);
+            resolve(postsById[0]);
         }
     });
 }
