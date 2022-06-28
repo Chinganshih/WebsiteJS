@@ -90,7 +90,7 @@ function onHTTPStart() {
 // The route "/" must redirect the user to the "/about" route – this can be accomplished using res.redirect()
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "/views/about.html"));
-    res.redirect("/about");
+    res.redirect("/blog");
 });
 
 app.get("/about", (req, res) => {
@@ -290,7 +290,8 @@ app.get("/categories", (req, res) => {
 
 // If the user enters a route that is not matched with anything in your app (ie: http://localhost:8080/app) then you must return the custom message "Page Not Found" with an HTTP status code of 404.
 app.get("*", function(req, res) {
-    res.sendFile(path.join(__dirname, "views/notFound.html"), 404);
+    res.render('404');
+    // res.sendFile(path.join(__dirname, "views/notFound.html"), 404);
 })
 
 // setup http server to listen on HTTP_PORT
