@@ -1,9 +1,9 @@
 /*********************************************************************************
- *  WEB322 – Assignment 03
+ *  WEB322 – Assignment 04
  *  I declare that this assignment is my own work in accordance with Seneca  Academic Policy.  No part *  of this assignment has been copied manually or electronically from any other source 
  *  (including 3rd party web sites) or distributed to other students.
  * 
- *  Name: _ChingAn, Shih_ Student ID: _148221195_ Date: __2022-06-14__
+ *  Name: _ChingAn, Shih_ Student ID: _148221195_ Date: __2022-06-28__
  *
  *  Online (Heroku) URL:  https://damp-depths-30191.herokuapp.com/
  *
@@ -21,7 +21,37 @@ var app = express();
 const multer = require("multer");
 const cloudinary = require('cloudinary').v2;
 const streamifier = require('streamifier');
+const exphs = require('express-handlebars');
 
+// This will tell our server that any file with the “.hbs” extension (instead of “.html”) will use the handlebars “engine” (template engine).
+app.engine('.hbs', exphs.engine({
+    extname: '.hbs',
+    helpers: {
+        // This basically allows us to replace all of our existing navbar links, ie: <li><a href="/about">About</a></li> with code that looks like this {{#navLink "/about"}}About{{/navLink}}.  
+        // The benefit here is that the helper will automatically render the correct <li> element add the class "active" if app.locals.activeRoute matches the provided url, ie "/about"
+        navLink: function(url, options) {
+            return '<li' +
+                ((url == app.locals.activeRoute) ? ' class="active" ' : '') +
+                '><a href="' + url + '">' + options.fn(this) + '</a></li>';
+        },
+
+        // This helper will give us the ability to evaluate conditions for equality, ie {{#equals "a" "a"}} … {{/equals}} will render the contents, since "a" equals "a". 
+        // It's exactly like the "if" helper, but with the added benefit of evaluating a simple expression for equality
+        equal: function(lvalue, rvalue, options) {
+            if (arguments.length < 3)
+                throw new Error("Handlebars Helper equal needs 2 parameters");
+            if (lvalue != rvalue) {
+                return options.inverse(this);
+            } else {
+                return options.fn(this);
+            }
+        }
+
+
+    }
+}));
+
+app.set('view engine', 'hbs');
 
 // Set the cloudinary config to use your "Cloud Name", "API Key" and "API Secret" values
 cloudinary.config({
@@ -36,6 +66,12 @@ const upload = multer(); // no { storage: storage } since we are not using disk 
 // for your server to correctly return the "/css/main.css" file, the "static" middleware must be used:  
 // in your server.js file, add the line: app.use(express.static('public')); before your "routes"
 app.use(express.static('public'));
+app.use(function(req, res, next) {
+    let route = req.path.substring(1);
+    app.locals.activeRoute = (route == "/") ? "/" : "/" + route.replace(/\/(.*)/, "");
+    app.locals.viewingCategory = req.query.category;
+    next();
+});
 
 // The server must listen on process.env.PORT || 8080
 var HTTP_PORT = process.env.PORT || 8080;
@@ -53,7 +89,8 @@ app.get("/", (req, res) => {
 });
 
 app.get("/about", (req, res) => {
-    res.sendFile(path.join(__dirname, "views/about.html"));
+    res.render('about');
+    // res.sendFile(path.join(__dirname, "views/about.html"));
 })
 
 // This route will return a JSON formatted string containing all of the posts within the posts.json file whose published property is set to true (ie: "published" posts)
@@ -75,19 +112,19 @@ app.get("/posts", (req, res) => {
 
     if (category) {
         blog_service.getPostsByCategory(category)
-            .then((data) => { res.send(data); })
-            .catch((err) => { res.send(err); })
+            .then((data) => { res.render('posts', { posts: data }) })
+            .catch((err) => { res.render("posts", { message: "no results" }) })
 
     } else if (minDate) {
         blog_service.getPostsByMinDate(minDate)
-            .then((data) => { res.send(data); })
-            .catch((err) => { res.send(err); })
+            .then((data) => { res.render('posts', { posts: data }) })
+            .catch((err) => { res.render("posts", { message: "no results" }) })
     } else {
         blog_service.getAllPosts()
-            .then((data) => { res.send(data); })
+            .then((data) => { res.render('posts', { posts: data }) })
             .catch((err) => {
-                var message = err;
-                res.send(message);
+                // var message = err;
+                res.render("posts", { message: "no results" })
             })
     }
 
@@ -101,7 +138,8 @@ app.get("/post/:value", (req, res) => {
 })
 
 app.get("/posts/add", (req, res) => {
-    res.sendFile(path.join(__dirname, "/views/addPost.html"));
+    res.render('addPost');
+    // res.sendFile(path.join(__dirname, "/views/addPost.html"));
 })
 
 app.post("/posts/add", upload.single("featureImage"), (req, res) => {
@@ -147,10 +185,10 @@ app.post("/posts/add", upload.single("featureImage"), (req, res) => {
 // This route will return a JSON formatted string containing all of the categories within the categories.json file
 app.get("/categories", (req, res) => {
     blog_service.getCategories()
-        .then((data) => { res.send(data); })
+        .then((data) => { res.render("categories", { categories: data }); })
         .catch((err) => {
-            var message = err;
-            res.send(message);
+            // var message = err;
+            res.render("categories", { message: "no results" });
         })
 })
 
