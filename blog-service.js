@@ -131,11 +131,13 @@ module.exports.addPost = (postData) => {
     postData.published = (postData.published) ? true : false;
     postData.postDate = new Date();
     for (const prop in postData) {
-        if (postData[prop] == "") {
+        console.log(postData[prop])
+        if (postData[prop] == "" && postData[prop] != false) {
             postData[prop] = null;
         }
     }
 
+    console.log(postData)
     return new Promise((resolve, reject) => {
 
         sequelize.sync().then(() => {
@@ -194,7 +196,6 @@ module.exports.getPublishedPosts = () => {
 
 module.exports.getPublishedPostsByCategory = (cate) => {
 
-    console.log(cate)
     return new Promise((resolve, reject) => {
         sequelize.sync().then(() => {
             Post.findAll({
@@ -203,6 +204,7 @@ module.exports.getPublishedPostsByCategory = (cate) => {
                     category: cate
                 }
             }).then((data) => {
+                console.log(data)
                 resolve(data)
             }).catch(() => {
                 reject('no results returned');

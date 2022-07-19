@@ -163,7 +163,7 @@ app.get('/blog', async(req, res) => {
     }
 
     // render the "blog" view with all of the data (viewData)
-
+    // console.log(viewData)
     res.render('blog', { data: viewData })
 
 });
