@@ -1,15 +1,23 @@
 /*********************************************************************************
- *  WEB322 – Assignment 04
+ *  WEB322 – Assignment 05
  *  I declare that this assignment is my own work in accordance with Seneca  Academic Policy.  No part *  of this assignment has been copied manually or electronically from any other source 
  *  (including 3rd party web sites) or distributed to other students.
  * 
- *  Name: _ChingAn, Shih_ Student ID: _148221195_ Date: __2022-06-28__
+ *  Name: _ChingAn, Shih_ Student ID: _148221195_ Date: __2022-07-19__
  *
  *  Online (Heroku) URL:  https://pure-cove-51624.herokuapp.com/
  *
  *  GitHub Repository URL: __ https://github.com/Chinganshih/web322-app.git____
  *
  ********************************************************************************/
+
+//  Host: ec2-3-219-52-220.compute-1.amazonaws.com
+//  Database: drnq2p1bqqihk
+//  User: usxkvkrgnqxwli
+//  Port: 5432
+//  Password: e8329ea7bc9754817d97c8477c268a70f83062b0af3e0edd795eb6ccb62b00d8
+//  URI: postgres://usxkvkrgnqxwli:e8329ea7bc9754817d97c8477c268a70f83062b0af3e0edd795eb6ccb62b00d8@ec2-3-219-52-220.compute-1.amazonaws.com:5432/drnq2p1bqqihk
+//  Heroku CLI: heroku pg:psql postgresql-deep-59001 --app pure-cove-51624
 
 
 var blog_service = require("./blog-service.js");
@@ -52,7 +60,17 @@ app.engine('.hbs', exphs.engine({
         // we will use a custom helper called safeHTML that removes unwanted JavaScript code from our post body string by using a custom package: strip-js
         safeHTML: function(context) {
             return stripJs(context);
+        },
+
+
+        formatDate: function(dateObj) {
+            // console.log(dateObj)
+            let year = dateObj.getFullYear();
+            let month = (dateObj.getMonth() + 1).toString();
+            let day = dateObj.getDate().toString();
+            return `${year}-${month.padStart(2, '0')}-${day.padStart(2,'0')}`;
         }
+
     }
 }));
 
@@ -71,6 +89,8 @@ const upload = multer(); // no { storage: storage } since we are not using disk 
 // for your server to correctly return the "/css/main.css" file, the "static" middleware must be used:  
 // in your server.js file, add the line: app.use(express.static('public')); before your "routes"
 app.use(express.static('public'));
+app.use(express.urlencoded({ extended: true }));
+
 app.use(function(req, res, next) {
     let route = req.path.substring(1);
     app.locals.activeRoute = (route == "/") ? "/" : "/" + route.replace(/\/(.*)/, "");
@@ -143,7 +163,8 @@ app.get('/blog', async(req, res) => {
     }
 
     // render the "blog" view with all of the data (viewData)
-    res.render("blog", { data: viewData })
+
+    res.render('blog', { data: viewData })
 
 });
 
@@ -194,7 +215,6 @@ app.get('/blog/:id', async(req, res) => {
         viewData.categoriesMessage = "no results"
     }
 
-
     // render the "blog" view with all of the data (viewData)
     res.render("blog", { data: viewData })
 });
@@ -205,22 +225,24 @@ app.get("/posts", (req, res) => {
     var category = req.query.category;
     var minDate = req.query.minDate;
 
-    console.log(category);
     if (category) {
         blog_service.getPostsByCategory(category)
-            .then((data) => { res.render('posts', { posts: data }) })
-            .catch((err) => { res.render('posts', { message: "no results" }) })
-
+            .then((data) => {
+                if (data.length > 0) res.render('posts', { posts: data })
+                else res.render('posts', { message: "no results" });
+            })
     } else if (minDate) {
         blog_service.getPostsByMinDate(minDate)
-            .then((data) => { res.render('posts', { posts: data }) })
-            .catch((err) => { res.render("posts", { message: "no results" }) })
+            .then((data) => {
+                if (data.length > 0) res.render('posts', { posts: data })
+                else res.render('posts', { message: "no results" });
+            })
     } else {
         blog_service.getAllPosts()
-            .then((data) => { res.render('posts', { posts: data }) })
-            .catch((err) => {
-                // var message = err;
-                res.render("posts", { message: "no results" })
+            .then((data) => {
+                console.log(data)
+                if (data.length > 0) res.render('posts', { posts: data })
+                else res.render('posts', { message: "no results" });
             })
     }
 
@@ -234,8 +256,10 @@ app.get("/post/:value", (req, res) => {
 })
 
 app.get("/posts/add", (req, res) => {
-    res.render('addPost');
-    // res.sendFile(path.join(__dirname, "/views/addPost.html"));
+    blog_service.getCategories()
+        .then((data) => res.render('addPost', { categories: data }))
+        .catch(() => res.render('addPost', { categories: [] }))
+
 })
 
 app.post("/posts/add", upload.single("featureImage"), (req, res) => {
@@ -272,21 +296,83 @@ app.post("/posts/add", upload.single("featureImage"), (req, res) => {
         req.body.featureImage = imgUrl;
         // TODO: Process the req.body and add it as a new Blog Post before redirecting to /posts
         blog_service.addPost(req.body).then((data) => {
+
             res.redirect('/posts');
         })
     }
 })
 
+// This GET route is very similar to your current "/posts/add" route - only instead of "rendering" the "addPost" view, we will instead set up the route to "render" an "addCategory" view (added later)
+app.get("/categories/add", (req, res) => {
+    res.render('addCategory');
+})
 
 // This route will return a JSON formatted string containing all of the categories within the categories.json file
 app.get("/categories", (req, res) => {
     blog_service.getCategories()
-        .then((data) => { res.render("categories", { categories: data }); })
-        .catch((err) => {
-            // var message = err;
-            res.render("categories", { message: "no results" });
+        .then((data) => {
+            if (data.length > 0) res.render('categories', { categories: data });
+            else res.render("categories", { message: "no results" });
         })
+
 })
+
+// This POST route is very similar to the logic inside the "processPost()" function within your current "/post/add" POST route - only instead of calling the addPost() blog-service function, you will instead call your newly created addCategory() function with the POST data in req.body (NOTE: there's also no "featureImage" property that needs to be set)  
+// Instead of redirecting to /posts when the promise has resolved (using .then()), we will instead redirect to /categories
+app.post("/categories/add", (req, res) => {
+
+    if (req.file) {
+        let streamUpload = (req) => {
+            return new Promise((resolve, reject) => {
+                let stream = cloudinary.uploader.upload_stream(
+                    (error, result) => {
+                        if (result) {
+                            resolve(result);
+                        } else {
+                            reject(error);
+                        }
+                    });
+                streamifier.createReadStream(req.file.buffer).pipe(stream);
+            });
+        };
+
+        async function upload(req) {
+            let result = await streamUpload(req);
+            console.log(result);
+            return result;
+        }
+
+        upload(req).then((uploaded) => {
+            processPost(uploaded.url);
+        });
+    } else {
+        processPost("");
+    }
+
+    function processPost(imgUrl) {
+        // TODO: Process the req.body and add it as a new Blog Post before redirecting to /posts
+        blog_service.addCategory(req.body).then((data) => {
+            res.redirect('/categories');
+        })
+    }
+})
+
+// This GET route will invoke your newly created deleteCategoryById(id) blog-service method.  If the function resolved successfully, redirect the user to the "/categories" view.  If the operation encountered an error, return a status code of 500 and the plain text: "Unable to Remove Category / Category not found)"
+app.get("/categories/delete/:id", (req, res) => {
+    var id = req.params.id;
+    blog_service.deleteCategoryId(id)
+        .then((data) => res.redirect('/categories'))
+        .catch(() => res.status(500).send("Unable to Remove Category / Category not found)"))
+})
+
+// This GET route functions almost exactly the same as the route above, only instead of invoking deleteCategoryById(id), it will instead invoke deletePostById(id) and return an appropriate error message if the operation encountered an error
+app.get("/posts/delete/:id", (req, res) => {
+    var id = req.params.id;
+    blog_service.deletePostId(id)
+        .then((data) => res.redirect('/posts'))
+        .catch(() => res.status(500).send("Unable to Remove Post / Post not found)"))
+})
+
 
 // If the user enters a route that is not matched with anything in your app (ie: http://localhost:8080/app) then you must return the custom message "Page Not Found" with an HTTP status code of 404.
 app.get("*", function(req, res) {
