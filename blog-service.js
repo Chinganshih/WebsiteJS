@@ -1,4 +1,6 @@
+const { response } = require('express');
 const Sequelize = require('sequelize');
+const { Json } = require('sequelize/types/utils');
 
 var sequelize = new Sequelize('drnq2p1bqqihk', 'usxkvkrgnqxwli', 'e8329ea7bc9754817d97c8477c268a70f83062b0af3e0edd795eb6ccb62b00d8', {
     host: 'ec2-3-219-52-220.compute-1.amazonaws.com',
@@ -131,11 +133,13 @@ module.exports.addPost = (postData) => {
     postData.published = (postData.published) ? true : false;
     postData.postDate = new Date();
     for (const prop in postData) {
-        if (postData[prop] == "") {
+        console.log(postData[prop])
+        if (postData[prop] == "" && postData[prop] != false) {
             postData[prop] = null;
         }
     }
 
+    console.log(postData)
     return new Promise((resolve, reject) => {
 
         sequelize.sync().then(() => {
@@ -194,7 +198,6 @@ module.exports.getPublishedPosts = () => {
 
 module.exports.getPublishedPostsByCategory = (cate) => {
 
-    console.log(cate)
     return new Promise((resolve, reject) => {
         sequelize.sync().then(() => {
             Post.findAll({
@@ -203,6 +206,7 @@ module.exports.getPublishedPostsByCategory = (cate) => {
                     category: cate
                 }
             }).then((data) => {
+                console.log(data)
                 resolve(data)
             }).catch(() => {
                 reject('no results returned');
