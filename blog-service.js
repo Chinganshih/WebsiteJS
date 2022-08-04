@@ -1,4 +1,6 @@
+const { response } = require('express');
 const Sequelize = require('sequelize');
+// const { Json } = require('sequelize/types/utils');
 
 var sequelize = new Sequelize('drnq2p1bqqihk', 'usxkvkrgnqxwli', 'e8329ea7bc9754817d97c8477c268a70f83062b0af3e0edd795eb6ccb62b00d8', {
     host: 'ec2-3-219-52-220.compute-1.amazonaws.com',
