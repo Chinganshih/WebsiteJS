@@ -1,9 +1,9 @@
 /*********************************************************************************
- *  WEB322 – Assignment 05
+ *  WEB322 – Assignment 06
  *  I declare that this assignment is my own work in accordance with Seneca  Academic Policy.  No part *  of this assignment has been copied manually or electronically from any other source 
  *  (including 3rd party web sites) or distributed to other students.
  * 
- *  Name: _ChingAn, Shih_ Student ID: _148221195_ Date: __2022-07-19__
+ *  Name: _ChingAn, Shih_ Student ID: _148221195_ Date: __2022-08-04__
  *
  *  Online (Heroku) URL:  https://pure-cove-51624.herokuapp.com/
  *
@@ -32,6 +32,8 @@ const streamifier = require('streamifier');
 const exphs = require('express-handlebars');
 const stripJs = require('strip-js');
 const blogData = require("./blog-service");
+const authData = require("./auth-service.js");
+const clientSessions = require("client-sessions");
 
 // This will tell our server that any file with the “.hbs” extension (instead of “.html”) will use the handlebars “engine” (template engine).
 app.engine('.hbs', exphs.engine({
@@ -89,6 +91,14 @@ const upload = multer(); // no { storage: storage } since we are not using disk 
 // for your server to correctly return the "/css/main.css" file, the "static" middleware must be used:  
 // in your server.js file, add the line: app.use(express.static('public')); before your "routes"
 app.use(express.static('public'));
+
+app.use(clientSessions({
+    cookieName: "session",
+    secret: "assignment6_web322",
+    duration: 2 * 60 * 1000,
+    activeDuration: 1000 * 60
+}))
+
 app.use(express.urlencoded({ extended: true }));
 
 app.use(function(req, res, next) {
@@ -98,12 +108,38 @@ app.use(function(req, res, next) {
     next();
 });
 
+app.use(function(req, res, next) {
+    res.locals.session = req.session;
+    next();
+});
+
 // The server must listen on process.env.PORT || 8080
 var HTTP_PORT = process.env.PORT || 8080;
 
-//The server must output: "Express http server listening on port" - to the console, where port is the port the server is currently listening on (ie: 8080)
+// //The server must output: "Express http server listening on port" - to the console, where port is the port the server is currently listening on (ie: 8080)
 function onHTTPStart() {
     console.log("Express http server listening on:" + HTTP_PORT);
+}
+
+// setup http server to listen on HTTP_PORT
+blogData.initialize()
+    .then(authData.initialize())
+    .then(() => {
+        app.listen(HTTP_PORT, () => {
+            console.log("app listening on: " + HTTP_PORT)
+        })
+    })
+    .catch((err) => {
+        console.log("unable to start server: " + err)
+    })
+
+function ensureLogin(req, res, next) {
+
+    if (!req.session.user) {
+        res.redirect("/login")
+    } else {
+        next();
+    }
 }
 
 // setup a 'route' to listen on the default url path
@@ -113,9 +149,52 @@ app.get("/", (req, res) => {
     res.redirect("/blog");
 });
 
+//This "GET" route simply renders the "login" view without any data (See login.hbs under Adding New Routes below)
+app.get("/login", (req, res) => {
+    res.render('login');
+})
+
+app.get("/register", (req, res) => {
+    res.render('register');
+})
+
+app.post("/register", (req, res) => {
+    authData.registerUser(req.body)
+        .then((data) => {
+            res.render('register', { successMessage: "User created" })
+        })
+        .catch((err) => {
+            res.render('register', { errorMessage: err, userName: req.body.userName })
+        })
+})
+
+app.post("/login", (req, res) => {
+    req.body.userAgent = req.get('User-Agent');
+    authData.checkUser(req.body)
+        .then((user) => {
+            req.session.user = {
+                userName: user.userName,
+                email: user.email,
+                loginHistory: user.loginHistory
+            }
+            res.redirect('/posts')
+        })
+        .catch((err) => {
+            res.render('login', { errorMessage: err, userName: req.body.userName })
+        })
+})
+
+app.get('/logout', (req, res) => {
+    req.session.reset();
+    res.redirect('/');
+})
+
+app.get('/userHistory', ensureLogin, (req, res) => {
+    res.render('userHistory');
+})
+
 app.get("/about", (req, res) => {
     res.render('about');
-    // res.sendFile(path.join(__dirname, "views/about.html"));
 })
 
 // This route will return a JSON formatted string containing all of the posts within the posts.json file whose published property is set to true (ie: "published" posts)
@@ -220,7 +299,7 @@ app.get('/blog/:id', async(req, res) => {
 });
 
 // This route will return a JSON formatted string containing all the posts within the posts.json files
-app.get("/posts", (req, res) => {
+app.get("/posts", ensureLogin, (req, res) => {
 
     var category = req.query.category;
     var minDate = req.query.minDate;
@@ -248,21 +327,21 @@ app.get("/posts", (req, res) => {
 
 })
 
-app.get("/post/:value", (req, res) => {
+app.get("/post/:value", ensureLogin, (req, res) => {
     var id = req.params.value;
     blog_service.getPostById(id)
         .then((data) => res.send(data))
         .catch((err) => res.send(err))
 })
 
-app.get("/posts/add", (req, res) => {
+app.get("/posts/add", ensureLogin, (req, res) => {
     blog_service.getCategories()
         .then((data) => res.render('addPost', { categories: data }))
         .catch(() => res.render('addPost', { categories: [] }))
 
 })
 
-app.post("/posts/add", upload.single("featureImage"), (req, res) => {
+app.post("/posts/add", ensureLogin, upload.single("featureImage"), (req, res) => {
 
     if (req.file) {
         let streamUpload = (req) => {
@@ -303,12 +382,12 @@ app.post("/posts/add", upload.single("featureImage"), (req, res) => {
 })
 
 // This GET route is very similar to your current "/posts/add" route - only instead of "rendering" the "addPost" view, we will instead set up the route to "render" an "addCategory" view (added later)
-app.get("/categories/add", (req, res) => {
+app.get("/categories/add", ensureLogin, (req, res) => {
     res.render('addCategory');
 })
 
 // This route will return a JSON formatted string containing all of the categories within the categories.json file
-app.get("/categories", (req, res) => {
+app.get("/categories", ensureLogin, (req, res) => {
     blog_service.getCategories()
         .then((data) => {
             if (data.length > 0) res.render('categories', { categories: data });
@@ -321,6 +400,7 @@ app.get("/categories", (req, res) => {
 // Instead of redirecting to /posts when the promise has resolved (using .then()), we will instead redirect to /categories
 app.post("/categories/add", (req, res) => {
 
+    console.log(req.body)
     if (req.file) {
         let streamUpload = (req) => {
             return new Promise((resolve, reject) => {
@@ -358,7 +438,7 @@ app.post("/categories/add", (req, res) => {
 })
 
 // This GET route will invoke your newly created deleteCategoryById(id) blog-service method.  If the function resolved successfully, redirect the user to the "/categories" view.  If the operation encountered an error, return a status code of 500 and the plain text: "Unable to Remove Category / Category not found)"
-app.get("/categories/delete/:id", (req, res) => {
+app.get("/categories/delete/:id", ensureLogin, (req, res) => {
     var id = req.params.id;
     blog_service.deleteCategoryId(id)
         .then((data) => res.redirect('/categories'))
@@ -366,7 +446,7 @@ app.get("/categories/delete/:id", (req, res) => {
 })
 
 // This GET route functions almost exactly the same as the route above, only instead of invoking deleteCategoryById(id), it will instead invoke deletePostById(id) and return an appropriate error message if the operation encountered an error
-app.get("/posts/delete/:id", (req, res) => {
+app.get("/posts/delete/:id", ensureLogin, (req, res) => {
     var id = req.params.id;
     blog_service.deletePostId(id)
         .then((data) => res.redirect('/posts'))
@@ -377,14 +457,4 @@ app.get("/posts/delete/:id", (req, res) => {
 // If the user enters a route that is not matched with anything in your app (ie: http://localhost:8080/app) then you must return the custom message "Page Not Found" with an HTTP status code of 404.
 app.get("*", function(req, res) {
     res.render('404');
-    // res.sendFile(path.join(__dirname, "views/notFound.html"), 404);
-})
-
-// setup http server to listen on HTTP_PORT
-blog_service.initialize().then(function() {
-    app.listen(HTTP_PORT, onHTTPStart);
-})
-
-blog_service.initialize().catch(() => {
-    console.log("Fail to read JSON file")
 })

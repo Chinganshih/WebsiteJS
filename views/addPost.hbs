@@ -35,7 +35,7 @@
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="title">Title:</label>
-                                    <input class="form-control" id="title" name="title" type="text">
+                                    <input class="form-control" id="title" name="title" type="text" required>
                                 </div>
                             </div>
                         </div>
@@ -43,7 +43,7 @@
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="body">Body:</label>
-                                    <textarea class="form-control" id="body" name="body" rows="15"></textarea>
+                                    <textarea class="form-control" id="body" name="body" rows="15" required></textarea>
                                 </div>
                             </div>
                         </div>
@@ -52,7 +52,7 @@
                                 <div class="form-group">
                                     <label for="category">Category:</label>
                                     {{#if categories}}
-                                        <select class="form-control" name="category" id="category">
+                                        <select class="form-control" name="category" id="category" required>
                                             <option value="">Select Category</option>
                                             {{#each categories}}
                                                 <option value="{{id}}">{{category}}</option>
