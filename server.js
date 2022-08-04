@@ -193,6 +193,7 @@ app.get('/userHistory', ensureLogin, (req, res) => {
     res.render('userHistory');
 })
 
+
 app.get("/about", (req, res) => {
     res.render('about');
 })
@@ -400,41 +401,9 @@ app.get("/categories", ensureLogin, (req, res) => {
 // Instead of redirecting to /posts when the promise has resolved (using .then()), we will instead redirect to /categories
 app.post("/categories/add", (req, res) => {
 
-    console.log(req.body)
-    if (req.file) {
-        let streamUpload = (req) => {
-            return new Promise((resolve, reject) => {
-                let stream = cloudinary.uploader.upload_stream(
-                    (error, result) => {
-                        if (result) {
-                            resolve(result);
-                        } else {
-                            reject(error);
-                        }
-                    });
-                streamifier.createReadStream(req.file.buffer).pipe(stream);
-            });
-        };
-
-        async function upload(req) {
-            let result = await streamUpload(req);
-            console.log(result);
-            return result;
-        }
-
-        upload(req).then((uploaded) => {
-            processPost(uploaded.url);
-        });
-    } else {
-        processPost("");
-    }
-
-    function processPost(imgUrl) {
-        // TODO: Process the req.body and add it as a new Blog Post before redirecting to /posts
-        blog_service.addCategory(req.body).then((data) => {
-            res.redirect('/categories');
-        })
-    }
+    blog_service.addCategory(req.body).then((data) => {
+        res.redirect('/categories');
+    })
 })
 
 // This GET route will invoke your newly created deleteCategoryById(id) blog-service method.  If the function resolved successfully, redirect the user to the "/categories" view.  If the operation encountered an error, return a status code of 500 and the plain text: "Unable to Remove Category / Category not found)"
